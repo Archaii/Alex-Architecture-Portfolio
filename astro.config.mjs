@@ -2,8 +2,8 @@
 import { defineConfig } from 'astro/config';
 
 export default defineConfig({
-  // Update to the real production domain after the first Vercel deploy (used for canonical/OG URLs).
-  site: 'https://alex-architecture-portfolio.vercel.app',
+  // Production domain, used for canonical and Open Graph URLs.
+  site: 'https://alexarchitectureportfolio.vercel.app',
   output: 'static',
   prefetch: { prefetchAll: true },
 });

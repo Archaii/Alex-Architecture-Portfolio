@@ -1,0 +1,26 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Sheet not found" sheet="A-404" sheetTitle="Sheet not found">
+  <section class="nf wrap">
+    <p class="mono muted">Error · Sheet A-404</p>
+    <h1 class="h1">Sheet<br />not found</h1>
+    <p class="lead nf-text">This drawing isn’t in the set. It may have been moved or never drafted.</p>
+    <a href="/" class="mono u-link">← Back to the cover sheet</a>
+  </section>
+</Base>
+
+<style>
+  .nf {
+    min-height: 80svh;
+    padding-top: calc(var(--nav-h) + clamp(40px, 8vw, 120px));
+    display: grid;
+    align-content: start;
+    gap: clamp(20px, 3vw, 40px);
+  }
+  .nf-text {
+    max-width: 24ch;
+    color: var(--stone);
+  }
+</style>

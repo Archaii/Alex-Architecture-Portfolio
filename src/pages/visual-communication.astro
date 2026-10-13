@@ -1,0 +1,13 @@
+---
+import Base from '../layouts/Base.astro';
+import GalleryHeader from '../components/GalleryHeader.astro';
+import HorizontalGallery from '../components/HorizontalGallery.astro';
+import NextSubject from '../components/NextSubject.astro';
+import { visualCommunication as category } from '../data/categories';
+---
+
+<Base title={category.name} description={category.intro} sheet={category.sheet} sheetTitle={category.name}>
+  <GalleryHeader category={category} countLabel="Plates" />
+  <HorizontalGallery category={category} />
+  <NextSubject current={category.slug} />
+</Base>

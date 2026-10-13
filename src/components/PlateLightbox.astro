@@ -1,0 +1,274 @@
+---
+export type LightboxPlate = {
+  slug: string;
+  code: string;
+  title: string;
+  quote: string;
+  description: string;
+  full: string;
+  width: number;
+  height: number;
+  index: string;
+  total: string;
+};
+
+interface Props {
+  data: LightboxPlate[];
+  category: string;
+}
+const { data, category } = Astro.props;
+---
+
+<dialog class="lb" data-lb aria-labelledby="lb-title">
+  <script is:inline type="application/json" data-lb-data set:html={JSON.stringify(data)} />
+  <div class="lb-top mono">
+    <span><span data-lb-code></span> <span class="muted">— {category}</span></span>
+    <span class="muted"><span data-lb-index></span> / <span data-lb-total></span></span>
+    <button class="u-link lb-close" data-lb-close>Close ✕</button>
+  </div>
+
+  <div class="lb-body">
+    <div class="lb-stage" data-lb-stage>
+      <img class="lb-img" data-lb-img alt="" decoding="async" />
+    </div>
+
+    <aside class="lb-meta">
+      <span class="mono lb-code-big" data-lb-code-big></span>
+      <h2 class="lb-title" id="lb-title" data-lb-title></h2>
+      <p class="lb-quote quote" data-lb-quote></p>
+      <p class="lb-desc" data-lb-desc></p>
+      <div class="lb-nav">
+        <button class="round-btn" data-lb-prev aria-label="Previous plate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M20 12H4M10 6l-6 6 6 6"></path></svg>
+        </button>
+        <button class="round-btn" data-lb-next aria-label="Next plate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 12h16M14 6l6 6-6 6"></path></svg>
+        </button>
+        <span class="mono muted lb-keys">Click plate to zoom · ← → browse · Esc close</span>
+      </div>
+    </aside>
+  </div>
+</dialog>
+
+<style>
+  .lb {
+    width: 100vw;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: var(--ink);
+    color: var(--paper);
+    overflow: hidden;
+  }
+  .lb[open] {
+    display: grid;
+    grid-template-rows: auto 1fr;
+  }
+  .lb::backdrop {
+    background: var(--ink);
+  }
+  .lb-top {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    height: var(--nav-h);
+    padding-inline: var(--margin);
+    border-bottom: 1px solid var(--line);
+  }
+  .lb-close {
+    justify-self: end;
+    padding: 10px 0;
+  }
+  .lb-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) clamp(280px, 28vw, 420px);
+    min-height: 0;
+  }
+  .lb-stage {
+    position: relative;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    padding: clamp(16px, 3vw, 40px);
+    cursor: zoom-in;
+    min-height: 0;
+  }
+  .lb-img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    transition: transform 0.6s var(--ease-out);
+    will-change: transform;
+  }
+  .lb-stage.is-zoomed {
+    cursor: zoom-out;
+  }
+  .lb-stage.is-zoomed .lb-img {
+    transform: scale(2.2);
+    transition: transform 0.6s var(--ease-out);
+  }
+  .lb-meta {
+    border-left: 1px solid var(--line);
+    padding: clamp(24px, 3vw, 44px) var(--margin);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+  }
+  .lb-code-big {
+    font-size: clamp(2rem, 4vw, 3.6rem);
+    letter-spacing: -0.02em;
+    color: var(--auburn-hi);
+    line-height: 1;
+  }
+  .lb-title {
+    font-size: clamp(1.6rem, 2.6vw, 2.6rem);
+    font-weight: 280;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: -0.015em;
+  }
+  .lb-quote {
+    font-size: 1.2rem;
+    line-height: 1.35;
+  }
+  .lb-desc {
+    color: var(--stone);
+  }
+  .lb-nav {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .lb-keys {
+    margin-left: 8px;
+  }
+  @media (max-width: 860px) {
+    .lb[open] {
+      overflow-y: auto;
+    }
+    .lb-body {
+      grid-template-columns: 1fr;
+      grid-template-rows: 62dvh auto;
+    }
+    .lb-meta {
+      border-left: 0;
+      border-top: 1px solid var(--line);
+    }
+    .lb-keys {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  import { gsap, lockScroll, reducedMotion } from '../scripts/motion';
+
+  type P = {
+    slug: string;
+    code: string;
+    title: string;
+    quote: string;
+    description: string;
+    full: string;
+    width: number;
+    height: number;
+    index: string;
+    total: string;
+  };
+
+  const dlg = document.querySelector<HTMLDialogElement>('[data-lb]');
+  if (dlg) {
+    const data: P[] = JSON.parse(dlg.querySelector('[data-lb-data]')!.textContent || '[]');
+    const $ = <T extends HTMLElement>(s: string) => dlg.querySelector<T>(s)!;
+    const img = $<HTMLImageElement>('[data-lb-img]');
+    const stage = $('[data-lb-stage]');
+    const meta = dlg.querySelectorAll<HTMLElement>('.lb-meta > *');
+    let current = 0;
+    let opener: HTMLElement | null = null;
+
+    const render = (i: number, dir = 0) => {
+      current = (i + data.length) % data.length;
+      const p = data[current]!;
+      stage.classList.remove('is-zoomed');
+      img.style.transformOrigin = '';
+      // Show the card's already-loaded image first, then swap in the large file.
+      const card = document.querySelector<HTMLImageElement>(`[data-open="${current}"] img`);
+      img.src = card?.currentSrc || p.full;
+      img.width = p.width;
+      img.height = p.height;
+      const hi = new Image();
+      hi.onload = () => {
+        if (data[current]!.slug === p.slug) img.src = p.full;
+      };
+      hi.src = p.full;
+      img.alt = `${p.code} — ${p.title}`;
+      $('[data-lb-code]').textContent = p.code;
+      $('[data-lb-code-big]').textContent = p.code;
+      $('[data-lb-index]').textContent = p.index;
+      $('[data-lb-total]').textContent = p.total;
+      $('[data-lb-title]').textContent = p.title;
+      $('[data-lb-quote]').textContent = `“${p.quote}”`;
+      $('[data-lb-desc]').textContent = p.description;
+      history.replaceState(null, '', `${location.pathname}?plate=${p.slug}`);
+
+      if (!reducedMotion) {
+        gsap.fromTo(
+          img,
+          { clipPath: dir < 0 ? 'inset(0 0 0 100%)' : dir > 0 ? 'inset(0 100% 0 0)' : 'inset(100% 0 0 0)' },
+          { clipPath: 'inset(0 0 0 0%)', duration: 1, ease: 'expo.inOut' },
+        );
+        gsap.fromTo(meta, { y: 18, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, stagger: 0.06, ease: 'expo.out', delay: 0.25 });
+      }
+    };
+
+    const open = (i: number, from?: HTMLElement | null) => {
+      opener = from ?? null;
+      lockScroll(true);
+      dlg.showModal();
+      render(i);
+    };
+    const close = () => dlg.close();
+
+    dlg.addEventListener('close', () => {
+      lockScroll(false);
+      history.replaceState(null, '', location.pathname);
+      opener?.focus({ preventScroll: true });
+    });
+
+    document.querySelectorAll<HTMLButtonElement>('[data-open]').forEach((btn) =>
+      btn.addEventListener('click', () => open(Number(btn.dataset.open), btn)),
+    );
+    $('[data-lb-close]').addEventListener('click', close);
+    $('[data-lb-prev]').addEventListener('click', () => render(current - 1, -1));
+    $('[data-lb-next]').addEventListener('click', () => render(current + 1, 1));
+    dlg.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') render(current + 1, 1);
+      if (e.key === 'ArrowLeft') render(current - 1, -1);
+    });
+
+    // Click to zoom; while zoomed, the pointer pans the plate.
+    stage.addEventListener('click', (e) => {
+      const r = img.getBoundingClientRect();
+      img.style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`;
+      stage.classList.toggle('is-zoomed');
+    });
+    stage.addEventListener('pointermove', (e) => {
+      if (!stage.classList.contains('is-zoomed')) return;
+      const r = stage.getBoundingClientRect();
+      img.style.transformOrigin = `${((e.clientX - r.left) / r.width) * 100}% ${((e.clientY - r.top) / r.height) * 100}%`;
+    });
+
+    // Deep link: ?plate=pl300
+    const slug = new URLSearchParams(location.search).get('plate');
+    const idx = data.findIndex((p) => p.slug === slug);
+    if (idx >= 0) open(idx, document.querySelector<HTMLElement>(`[data-open="${idx}"]`));
+  }
+</script>

@@ -1,0 +1,198 @@
+---
+// One shared player for every [data-video-open] trigger on the page.
+---
+
+<dialog class="vm" data-vm aria-labelledby="vm-title">
+  <div class="vm-top mono">
+    <span id="vm-title" data-vm-title></span>
+    <button class="u-link vm-close" data-vm-close>Close ✕</button>
+  </div>
+  <div class="vm-stage">
+    <video class="vm-video" data-vm-video playsinline preload="metadata"></video>
+  </div>
+  <div class="vm-bar mono">
+    <button class="vm-btn" data-vm-play aria-label="Pause">
+      <svg class="i-pause" viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h3v14H7zM14 5h3v14h-3z"></path></svg>
+      <svg class="i-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+    </button>
+    <span class="vm-time"><span data-vm-cur>00:00</span> <span class="muted">/ <span data-vm-dur>00:00</span></span></span>
+    <input class="vm-seek" data-vm-seek type="range" min="0" max="1000" value="0" step="1" aria-label="Seek" />
+    <button class="vm-btn" data-vm-mute aria-label="Mute">
+      <span class="t-mute">Sound on</span><span class="t-unmute">Muted</span>
+    </button>
+  </div>
+</dialog>
+
+<style>
+  .vm {
+    width: 100vw;
+    height: 100dvh;
+    max-width: none;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .vm[open] {
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+  }
+  .vm::backdrop {
+    background: var(--ink);
+  }
+  .vm-top,
+  .vm-bar {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 0 var(--margin);
+    height: var(--nav-h);
+  }
+  .vm-top {
+    justify-content: space-between;
+    border-bottom: 1px solid var(--line);
+  }
+  .vm-bar {
+    border-top: 1px solid var(--line);
+  }
+  .vm-stage {
+    position: relative;
+    min-height: 0;
+  }
+  .vm-video {
+    position: absolute;
+    inset: 16px;
+    width: calc(100% - 32px);
+    height: calc(100% - 32px);
+    object-fit: contain;
+  }
+  .vm-btn {
+    display: inline-grid;
+    place-items: center;
+    min-width: 36px;
+    height: 36px;
+  }
+  .vm-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+  .i-play,
+  .t-unmute {
+    display: none;
+  }
+  .vm.is-paused .i-play,
+  .vm.is-muted .t-unmute {
+    display: block;
+  }
+  .vm.is-paused .i-pause,
+  .vm.is-muted .t-mute {
+    display: none;
+  }
+  .vm-time {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .vm-seek {
+    flex: 1;
+    appearance: none;
+    -webkit-appearance: none;
+    height: 20px;
+    background: transparent;
+    --p: 0%;
+  }
+  .vm-seek::-webkit-slider-runnable-track {
+    height: 1px;
+    background: linear-gradient(to right, var(--auburn-hi) var(--p), var(--line-strong) var(--p));
+  }
+  .vm-seek::-moz-range-track {
+    height: 1px;
+    background: linear-gradient(to right, var(--auburn-hi) var(--p), var(--line-strong) var(--p));
+  }
+  .vm-seek::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 11px;
+    height: 11px;
+    margin-top: -5px;
+    border-radius: 50%;
+    background: var(--paper);
+  }
+  .vm-seek::-moz-range-thumb {
+    width: 11px;
+    height: 11px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--paper);
+  }
+</style>
+
+<script>
+  import { lockScroll } from '../scripts/motion';
+
+  const dlg = document.querySelector<HTMLDialogElement>('[data-vm]');
+  if (dlg) {
+    const video = dlg.querySelector<HTMLVideoElement>('[data-vm-video]')!;
+    const title = dlg.querySelector<HTMLElement>('[data-vm-title]')!;
+    const playBtn = dlg.querySelector<HTMLButtonElement>('[data-vm-play]')!;
+    const muteBtn = dlg.querySelector<HTMLButtonElement>('[data-vm-mute]')!;
+    const seek = dlg.querySelector<HTMLInputElement>('[data-vm-seek]')!;
+    const cur = dlg.querySelector<HTMLElement>('[data-vm-cur]')!;
+    const dur = dlg.querySelector<HTMLElement>('[data-vm-dur]')!;
+    let opener: HTMLElement | null = null;
+
+    const fmt = (s: number) =>
+      `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+    const sync = () => {
+      dlg.classList.toggle('is-paused', video.paused);
+      dlg.classList.toggle('is-muted', video.muted);
+      playBtn.setAttribute('aria-label', video.paused ? 'Play' : 'Pause');
+      muteBtn.setAttribute('aria-label', video.muted ? 'Unmute' : 'Mute');
+    };
+    const toggle = () => (video.paused ? video.play().catch(() => {}) : video.pause());
+
+    document.querySelectorAll<HTMLButtonElement>('[data-video-open]').forEach((btn) =>
+      btn.addEventListener('click', () => {
+        opener = btn;
+        btn.querySelector('video')?.pause();
+        title.textContent = btn.dataset.title ?? '';
+        video.poster = btn.dataset.poster ?? '';
+        video.src = btn.dataset.src!;
+        video.muted = false;
+        lockScroll(true);
+        dlg.showModal();
+        video.play().catch(() => sync());
+        sync();
+      }),
+    );
+
+    video.addEventListener('loadedmetadata', () => (dur.textContent = fmt(video.duration)));
+    video.addEventListener('timeupdate', () => {
+      cur.textContent = fmt(video.currentTime);
+      const p = video.duration ? (video.currentTime / video.duration) * 1000 : 0;
+      seek.value = String(p);
+      seek.style.setProperty('--p', `${p / 10}%`);
+    });
+    ['play', 'pause', 'volumechange'].forEach((ev) => video.addEventListener(ev, sync));
+    video.addEventListener('click', toggle);
+    playBtn.addEventListener('click', toggle);
+    muteBtn.addEventListener('click', () => (video.muted = !video.muted));
+    seek.addEventListener('input', () => {
+      if (video.duration) video.currentTime = (Number(seek.value) / 1000) * video.duration;
+    });
+    dlg.addEventListener('keydown', (e) => {
+      if (e.key === ' ' && e.target === dlg) {
+        e.preventDefault();
+        toggle();
+      }
+    });
+    dlg.querySelector('[data-vm-close]')!.addEventListener('click', () => dlg.close());
+    dlg.addEventListener('close', () => {
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+      lockScroll(false);
+      opener?.focus({ preventScroll: true });
+    });
+  }
+</script>

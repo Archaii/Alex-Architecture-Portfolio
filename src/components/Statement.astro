@@ -1,0 +1,79 @@
+---
+import { site } from '../data/site';
+
+const text =
+  'A first-year architecture student at Mapúa University, learning to see the built world the way it is drawn: line by line, plane by plane, and person by person. These sheets collect that first year of lettering and line, freehand and watercolor, and the study of how people meet space.';
+const words = text.split(' ');
+---
+
+<section class="st wrap" id="about" data-statement>
+  <div class="dim mono" aria-hidden="true"><span class="dim-tick"></span><span>About · Sheet A-001</span><span class="dim-tick"></span></div>
+  <div class="st-body grid">
+    <dl class="st-facts mono" data-sr>
+      <div><dt class="muted">Name</dt><dd>{site.name}</dd></div>
+      <div><dt class="muted">Program</dt><dd>{site.program}</dd></div>
+      <div><dt class="muted">Department</dt><dd>{site.department}</dd></div>
+      <div><dt class="muted">Section</dt><dd>{site.section}</dd></div>
+      <div><dt class="muted">School</dt><dd>{site.school}</dd></div>
+    </dl>
+    <p class="lead st-text" data-fill>
+      {
+        words.map((w) => (
+          <>
+            <span class="w">{w}</span>{' '}
+          </>
+        ))
+      }
+    </p>
+  </div>
+</section>
+
+<style>
+  .st {
+    padding-block: clamp(100px, 16vw, 220px);
+  }
+  .st-body {
+    margin-top: clamp(40px, 6vw, 90px);
+    row-gap: 40px;
+  }
+  .st-facts {
+    grid-column: 1 / span 3;
+    display: grid;
+    gap: 14px;
+    align-content: start;
+  }
+  .st-facts dt {
+    font-size: 10.5px;
+  }
+  .st-text {
+    grid-column: 5 / -1;
+    text-indent: 12%;
+  }
+  :global(html.motion) .st-text .w {
+    color: var(--stone);
+  }
+  @media (max-width: 860px) {
+    .st-facts,
+    .st-text {
+      grid-column: 1 / -1;
+    }
+    .st-text {
+      grid-row: 1;
+    }
+  }
+</style>
+
+<script>
+  import { gsap, reducedMotion } from '../scripts/motion';
+
+  const words = document.querySelectorAll<HTMLElement>('[data-fill] .w');
+  if (words.length && !reducedMotion) {
+    // Words fill from graphite to paper as the paragraph scrolls through view.
+    gsap.to(words, {
+      color: '#f2eee8',
+      stagger: 0.1,
+      ease: 'none',
+      scrollTrigger: { trigger: '[data-fill]', start: 'top 80%', end: 'bottom 45%', scrub: true },
+    });
+  }
+</script>

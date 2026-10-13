@@ -1,0 +1,182 @@
+---
+import type { Video } from '../data/categories';
+
+interface Props {
+  video: Video;
+  number: string;
+  total: string;
+  flip?: boolean;
+}
+const { video: v, number, total, flip = false } = Astro.props;
+---
+
+<section class="vf wrap" id={v.slug}>
+  <div class="dim mono" aria-hidden="true">
+    <span class="dim-tick"></span><span>{number} / {total} · Video · {v.duration}</span><span class="dim-tick"></span>
+  </div>
+
+  <div class:list={['vf-grid', { flip }]} data-sr>
+    <button
+      class="vf-card"
+      data-video-open
+      data-src={v.src}
+      data-poster={v.poster}
+      data-title={`${v.code} — ${v.title}`}
+      data-cursor="Play"
+      aria-haspopup="dialog"
+      aria-label={`Play ${v.code} — ${v.title} (${v.duration})`}
+      style={`aspect-ratio: ${v.aspect}`}
+    >
+      <video class="vf-preview mono-img" muted loop playsinline preload="none" poster={v.poster} data-preview-src={v.src}
+      ></video>
+      <span class="vf-frame" aria-hidden="true">
+        <span class="mono">REC ●</span>
+        <span class="mono">{v.duration}</span>
+      </span>
+      <span class="vf-play mono" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"></path></svg>
+        Play with sound
+      </span>
+    </button>
+
+    <div class="vf-meta">
+      <span class="mono vf-code">{v.code}</span>
+      <h2 class="h2">{v.title}</h2>
+      <p class="quote vf-quote">“{v.quote}”</p>
+      <p class="vf-desc">{v.description}</p>
+      <dl class="vf-spec mono">
+        <div><dt class="muted">Format</dt><dd>Video · {v.aspect.replace('/', ':')}</dd></div>
+        <div><dt class="muted">Length</dt><dd>{v.duration}</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<style>
+  .vf {
+    padding-block: clamp(70px, 10vw, 140px);
+  }
+  .vf-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: var(--gutter) clamp(24px, 5vw, 96px);
+    margin-top: clamp(30px, 4vw, 56px);
+    align-items: center;
+  }
+  .vf-grid.flip .vf-card {
+    order: 2;
+  }
+  .vf-card {
+    position: relative;
+    display: block;
+    width: 100%;
+    max-height: 82svh;
+    justify-self: center;
+    overflow: hidden;
+    background: var(--ink-2);
+  }
+  .vf-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .vf-frame {
+    position: absolute;
+    inset: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    font-size: 11px;
+    pointer-events: none;
+  }
+  .vf-frame .mono:first-child {
+    color: var(--auburn-hi);
+  }
+  .vf-play {
+    position: absolute;
+    left: 50%;
+    bottom: 20px;
+    translate: -50% 0;
+    display: inline-flex;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 16px;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    background: rgba(11, 10, 9, 0.55);
+    backdrop-filter: blur(6px);
+    white-space: nowrap;
+    transition:
+      background-color 0.3s,
+      border-color 0.3s;
+  }
+  .vf-play svg {
+    width: 12px;
+    height: 12px;
+  }
+  .vf-card:hover .vf-play,
+  .vf-card:focus-visible .vf-play {
+    background: var(--auburn);
+    border-color: var(--auburn);
+  }
+  .vf-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .vf-code {
+    color: var(--auburn-hi);
+    font-size: 0.85rem;
+  }
+  .vf-quote {
+    font-size: clamp(1.25rem, 2vw, 1.8rem);
+    line-height: 1.3;
+  }
+  .vf-desc {
+    color: var(--stone);
+    max-width: 46ch;
+  }
+  .vf-spec {
+    display: flex;
+    gap: 40px;
+    margin-top: 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+  .vf-spec dt {
+    font-size: 10.5px;
+  }
+  @media (min-width: 901px) {
+    .vf-card {
+      width: auto;
+      height: 78svh;
+    }
+  }
+  @media (max-width: 900px) {
+    .vf-grid {
+      grid-template-columns: 1fr;
+    }
+    .vf-grid.flip .vf-card {
+      order: 0;
+    }
+    .vf-card {
+      width: min(100%, 420px);
+    }
+  }
+</style>
+
+<script>
+  import { finePointer } from '../scripts/motion';
+
+  // Hover preview: muted loop, loaded only on first hover.
+  if (finePointer) {
+    document.querySelectorAll<HTMLButtonElement>('[data-video-open]').forEach((card) => {
+      const v = card.querySelector<HTMLVideoElement>('video')!;
+      card.addEventListener('pointerenter', () => {
+        if (!v.src) v.src = v.dataset.previewSrc!;
+        v.play().catch(() => {});
+      });
+      card.addEventListener('pointerleave', () => v.pause());
+    });
+  }
+</script>

@@ -1,0 +1,275 @@
+---
+import { Image } from 'astro:assets';
+import portrait from '../assets/portrait.jpg';
+import { graphics, visualCommunication, plates } from '../data/categories';
+import { site } from '../data/site';
+
+// Three plates fanned behind the portrait, drawn from both galleries.
+const stack = [plates(graphics)[5]!, plates(visualCommunication)[2]!, plates(graphics)[7]!];
+const words = site.tagline.split(' ');
+---
+
+<section class="hero" data-hero>
+  <span class="reg r-tl" aria-hidden="true"></span>
+  <span class="reg r-tr" aria-hidden="true"></span>
+
+  <div class="stack-wrap" data-stack-wrap>
+    <div class="stack" data-stack data-cursor="Hello">
+      {
+        stack.map((p, i) => (
+          <figure class:list={['card', `c${i}`]} data-card>
+            <Image src={p.image} alt="" widths={[320, 560]} sizes="22vw" class="mono-img" loading="eager" />
+          </figure>
+        ))
+      }
+      <figure class="card portrait" data-card data-portrait>
+        <Image
+          src={portrait}
+          alt={`Portrait of ${site.name}`}
+          widths={[391]}
+          sizes="22vw"
+          class="mono-img"
+          loading="eager"
+          fetchpriority="high"
+        />
+        <figcaption class="mono">Fig. 01 — The author</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <h1 class="display hero-title" data-reveal>
+    <span class="line l1"><span>Hello, I’m</span></span>
+    <span class="line l2"><span>{site.first}</span></span>
+    <span class="line l3"><span>{site.last}</span></span>
+  </h1>
+
+  <div class="hero-foot">
+    <p class="mono" data-fade>
+      {site.program}<br /><span class="muted">{site.department} — {site.section}</span>
+    </p>
+    <p class="tagline" data-tagline>
+      {
+        words.map((w) => (
+          <>
+            <span class="w">{w}</span>{' '}
+          </>
+        ))
+      }
+    </p>
+    <p class="mono foot-right" data-fade>
+      ©{site.year}<br /><a href="#about" class="muted u-link">Scroll ↓</a>
+    </p>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 100svh;
+    padding: calc(var(--nav-h) + 2vh) var(--margin) var(--margin);
+    display: grid;
+    grid-template-rows: 1fr auto;
+    overflow: hidden;
+  }
+  .r-tl {
+    top: calc(var(--nav-h) - 7px);
+    left: calc(var(--margin) - 7px);
+  }
+  .r-tr {
+    top: calc(var(--nav-h) - 7px);
+    right: calc(var(--margin) - 7px);
+  }
+
+  /* Plate stack */
+  .stack-wrap {
+    position: absolute;
+    left: 50%;
+    top: 46%;
+    width: clamp(170px, 21vw, 360px);
+    aspect-ratio: 4 / 5;
+    translate: -46% -50%;
+    z-index: 1;
+  }
+  .stack {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+  .card {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    background: var(--ink-2);
+    box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.7);
+    transform-origin: 50% 90%;
+  }
+  .card :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  .c0 {
+    rotate: 14deg;
+    translate: 9% -4%;
+  }
+  .c1 {
+    rotate: 8deg;
+    translate: 5% -2%;
+  }
+  .c2 {
+    rotate: 3deg;
+    translate: 2% 0;
+  }
+  .portrait figcaption {
+    position: absolute;
+    left: 10px;
+    bottom: 8px;
+    font-size: 10.5px;
+    color: var(--paper);
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .stack:hover .portrait figcaption {
+    opacity: 0.85;
+  }
+  .stack:hover .portrait :global(img) {
+    filter: grayscale(0);
+  }
+
+  /* Name */
+  .hero-title {
+    position: relative;
+    z-index: 2;
+    align-self: center;
+    pointer-events: none;
+    margin-top: 4vh;
+  }
+  .l1 {
+    padding-left: 4vw;
+  }
+  .l2 {
+    padding-left: 11vw;
+  }
+  .l3 {
+    padding-left: 34vw;
+  }
+
+  .hero-foot {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: 1fr minmax(0, 30rem) 1fr;
+    gap: var(--gutter);
+    align-items: end;
+    padding-top: 28px;
+  }
+  .tagline {
+    text-align: center;
+    font-size: clamp(0.95rem, 1.1vw, 1.15rem);
+    line-height: 1.4;
+    font-weight: 330;
+    text-wrap: balance;
+  }
+  .tagline .w {
+    display: inline-block;
+  }
+  :global(html.motion) .tagline .w {
+    opacity: 0;
+    transform: translateY(0.6em);
+  }
+  .foot-right {
+    justify-self: end;
+    text-align: right;
+  }
+
+  @media (max-width: 720px) {
+    .hero {
+      grid-template-rows: 1fr auto auto;
+    }
+    .stack-wrap {
+      top: 38%;
+      width: 46vw;
+    }
+    .hero-title {
+      font-size: 15.5vw;
+      align-self: end;
+      margin-bottom: 4vh;
+    }
+    .l1,
+    .l2 {
+      padding-left: 0;
+    }
+    .l3 {
+      padding-left: 22vw;
+    }
+    .hero-foot {
+      grid-template-columns: 1fr 1fr;
+    }
+    .tagline {
+      grid-column: 1 / -1;
+      grid-row: 1;
+      text-align: left;
+      font-size: 1rem;
+    }
+  }
+</style>
+
+<script>
+  import { gsap, reducedMotion, finePointer, afterPreloader } from '../scripts/motion';
+
+  const hero = document.querySelector<HTMLElement>('[data-hero]');
+  if (hero && !reducedMotion) {
+    const wrap = hero.querySelector<HTMLElement>('[data-stack-wrap]')!;
+    const stack = hero.querySelector<HTMLElement>('[data-stack]')!;
+    const cards = gsap.utils.toArray<HTMLElement>('[data-card]', hero);
+    const lines = hero.querySelectorAll('.hero-title .line > span');
+    const words = hero.querySelectorAll('[data-tagline] .w');
+    const fades = hero.querySelectorAll('[data-fade]');
+
+    gsap.set(wrap, { opacity: 0, scale: 0.86, rotate: -6 });
+
+    afterPreloader().then(() => {
+      const tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
+      tl.to(lines, { y: 0, duration: 1.4, stagger: 0.12 }, 0.05)
+        .to(wrap, { opacity: 1, scale: 1, rotate: 0, duration: 1.6 }, 0.2)
+        .from(cards.slice(0, 3), { rotate: -12, y: 40, duration: 1.4, stagger: 0.08 }, 0.35)
+        .to(words, { opacity: 1, y: 0, duration: 0.8, stagger: 0.03, ease: 'power3.out' }, 0.7)
+        .to(fades, { opacity: 1, duration: 0.8, ease: 'power2.out' }, 0.9);
+    });
+
+    // Pointer parallax for the whole stack.
+    if (finePointer) {
+      const px = gsap.quickTo(stack, 'x', { duration: 0.9, ease: 'power3.out' });
+      const py = gsap.quickTo(stack, 'y', { duration: 0.9, ease: 'power3.out' });
+      hero.addEventListener('pointermove', (e) => {
+        const r = hero.getBoundingClientRect();
+        px(((e.clientX - r.left) / r.width - 0.5) * 40);
+        py(((e.clientY - r.top) / r.height - 0.5) * 30);
+      });
+
+      // Fan the plates out on hover.
+      const fan = [
+        { rotate: -16, xPercent: -62, yPercent: 6 },
+        { rotate: 12, xPercent: 58, yPercent: -8 },
+        { rotate: -4, xPercent: -18, yPercent: -26 },
+      ];
+      stack.addEventListener('pointerenter', () => {
+        cards.slice(0, 3).forEach((c, i) =>
+          gsap.to(c, { ...fan[i], duration: 0.9, ease: 'expo.out', overwrite: 'auto' }),
+        );
+        gsap.to(cards[3]!, { scale: 1.04, duration: 0.9, ease: 'expo.out' });
+      });
+      stack.addEventListener('pointerleave', () => {
+        cards.slice(0, 3).forEach((c) =>
+          gsap.to(c, { rotate: 0, xPercent: 0, yPercent: 0, duration: 0.9, ease: 'expo.out', overwrite: 'auto' }),
+        );
+        gsap.to(cards[3]!, { scale: 1, duration: 0.9, ease: 'expo.out' });
+      });
+    }
+
+    // Name drifts apart slightly as the hero scrolls away.
+    gsap.to(hero.querySelector('.l1'), { xPercent: -8, ease: 'none', scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true } });
+    gsap.to(hero.querySelector('.l3'), { xPercent: 8, ease: 'none', scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true } });
+    gsap.to(wrap, { yPercent: -18, ease: 'none', scrollTrigger: { trigger: hero, start: 'top top', end: 'bottom top', scrub: true } });
+  }
+</script>

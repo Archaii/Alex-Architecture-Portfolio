@@ -1,0 +1,79 @@
+---
+import type { Category } from '../data/categories';
+import { pad } from '../data/categories';
+
+interface Props {
+  category: Category;
+  countLabel: string;
+}
+const { category: c, countLabel } = Astro.props;
+---
+
+<header class="gh wrap" data-gh>
+  <div class="gh-meta mono" data-fade>
+    <span>Subject {c.number}</span>
+    <span class="muted">Sheet {c.sheet}</span>
+    <span class="muted">{pad(c.works.length)} {countLabel}</span>
+  </div>
+  <h1 class="h1 gh-title" data-reveal>
+    {c.name.split(' ').map((word) => <span class="line"><span>{word}</span></span>)}
+  </h1>
+  <div class="gh-body grid">
+    <p class="lead quote gh-quote" data-fade>“{c.quote}”</p>
+    <p class="gh-intro" data-fade>{c.intro}</p>
+  </div>
+</header>
+
+<style>
+  .gh {
+    padding-top: calc(var(--nav-h) + clamp(40px, 8vw, 120px));
+    padding-bottom: clamp(50px, 8vw, 110px);
+  }
+  .gh-meta {
+    display: flex;
+    gap: clamp(16px, 4vw, 60px);
+    flex-wrap: wrap;
+    margin-bottom: clamp(20px, 3vw, 40px);
+  }
+  .gh-title .line:nth-child(2) {
+    padding-left: 12vw;
+  }
+  .gh-title .line:nth-child(3) {
+    padding-left: 4vw;
+  }
+  .gh-body {
+    margin-top: clamp(40px, 6vw, 90px);
+    row-gap: 24px;
+  }
+  .gh-quote {
+    grid-column: 1 / span 7;
+    color: var(--paper);
+  }
+  .gh-intro {
+    grid-column: 9 / -1;
+    color: var(--stone);
+    align-self: end;
+    max-width: 46ch;
+  }
+  @media (max-width: 860px) {
+    .gh-quote,
+    .gh-intro {
+      grid-column: 1 / -1;
+    }
+    .gh-title .line {
+      padding-left: 0 !important;
+    }
+  }
+</style>
+
+<script>
+  import { gsap, reducedMotion } from '../scripts/motion';
+
+  const gh = document.querySelector<HTMLElement>('[data-gh]');
+  if (gh && !reducedMotion) {
+    gsap
+      .timeline({ defaults: { ease: 'expo.out' }, delay: 0.1 })
+      .to(gh.querySelectorAll('.line > span'), { y: 0, duration: 1.3, stagger: 0.1 })
+      .to(gh.querySelectorAll('[data-fade]'), { opacity: 1, duration: 1, stagger: 0.12, ease: 'power2.out' }, 0.4);
+  }
+</script>

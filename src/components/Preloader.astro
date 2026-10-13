@@ -1,0 +1,155 @@
+---
+// First-visit preloader: the sheet border and title block draw in while a counter runs,
+// then the sheet splits open onto the hero. Skipped on repeat visits and for reduced motion.
+---
+
+<div class="pre" data-preloader aria-hidden="true">
+  <div class="pre-half pre-top"></div>
+  <div class="pre-half pre-bot"></div>
+  <div class="pre-svg">
+    <!-- sheet border -->
+    <span class="ln h" style="top:3%;left:2%;right:2%"></span>
+    <span class="ln v" style="right:2%;top:3%;bottom:3%"></span>
+    <span class="ln h r" style="bottom:3%;left:2%;right:2%"></span>
+    <span class="ln v r" style="left:2%;top:3%;bottom:3%"></span>
+    <!-- title block -->
+    <span class="ln h tb" style="bottom:20%;left:62%;right:2%"></span>
+    <span class="ln v tb" style="left:62%;bottom:3%;height:17%"></span>
+    <span class="ln h tb" style="bottom:11.5%;left:62%;right:2%"></span>
+    <span class="ln v tb" style="left:80%;bottom:3%;height:17%"></span>
+  </div>
+  <div class="pre-count">
+    <span class="mono muted">Loading sheet A-000</span>
+    <span class="pre-num" data-pre-num>000</span>
+  </div>
+  <div class="pre-block mono">
+    <span>Architecture Portfolio</span>
+    <span class="muted">A. Y. S. Andaya</span>
+  </div>
+</div>
+
+<style>
+  .pre {
+    position: fixed;
+    inset: 0;
+    z-index: 140;
+    display: none;
+    pointer-events: none;
+  }
+  :global(html.is-loading) .pre {
+    display: block;
+    pointer-events: auto;
+  }
+  :global(html.is-loading) body {
+    overflow: hidden;
+  }
+  .pre-half {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 50.5%;
+    background: var(--ink);
+  }
+  .pre-top {
+    top: 0;
+  }
+  .pre-bot {
+    bottom: 0;
+  }
+  .pre-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .ln {
+    position: absolute;
+    background: var(--line-strong);
+  }
+  .ln.h {
+    height: 1px;
+    transform: scaleX(0);
+    transform-origin: left;
+  }
+  .ln.v {
+    width: 1px;
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  .ln.h.r {
+    transform-origin: right;
+  }
+  .ln.v.r {
+    transform-origin: bottom;
+  }
+  .pre-count {
+    position: absolute;
+    left: 4%;
+    bottom: 6%;
+    display: grid;
+    gap: 6px;
+  }
+  .pre-num {
+    font-family: var(--font-mono);
+    font-size: clamp(4rem, 14vw, 12rem);
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+  }
+  .pre-block {
+    position: absolute;
+    right: 4%;
+    bottom: 6%;
+    display: grid;
+    gap: 4px;
+    text-align: right;
+    opacity: 0;
+  }
+  @media (max-width: 720px) {
+    .pre-block {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  import { gsap } from '../scripts/motion';
+
+  const root = document.querySelector<HTMLElement>('[data-preloader]');
+  const html = document.documentElement;
+
+  if (root && html.classList.contains('is-loading')) {
+    const num = root.querySelector<HTMLElement>('[data-pre-num]')!;
+    const counter = { v: 0 };
+    const done = () => {
+      // Keep the halves visible while they slide away, but let the hero take input.
+      root.style.display = 'block';
+      root.style.pointerEvents = 'none';
+      html.classList.remove('is-loading');
+      try {
+        sessionStorage.setItem('seen', '1');
+      } catch {}
+      window.dispatchEvent(new Event('preloader:done'));
+    };
+
+    const tl = gsap.timeline({ defaults: { ease: 'expo.inOut' } });
+    tl.to(root.querySelectorAll('.ln:not(.tb)'), { scale: 1, duration: 0.9, stagger: 0.18 }, 0)
+      .to(root.querySelectorAll('.ln.tb'), { scale: 1, duration: 0.7, stagger: 0.1 }, 0.7)
+      .to(
+        counter,
+        {
+          v: 100,
+          duration: 1.7,
+          ease: 'power2.inOut',
+          onUpdate: () => (num.textContent = String(Math.round(counter.v)).padStart(3, '0')),
+        },
+        0,
+      )
+      .to(root.querySelector('.pre-block'), { opacity: 1, duration: 0.6, ease: 'power2.out' }, 0.8)
+      .to(root.querySelectorAll('.pre-svg, .pre-count, .pre-block'), { opacity: 0, duration: 0.4, ease: 'power2.in' }, '+=0.15')
+      .add(done, '-=0.05')
+      .to(root.querySelector('.pre-top'), { yPercent: -101, duration: 1.1 }, '<')
+      .to(root.querySelector('.pre-bot'), { yPercent: 101, duration: 1.1 }, '<')
+      .set(root, { display: 'none' });
+  }
+</script>

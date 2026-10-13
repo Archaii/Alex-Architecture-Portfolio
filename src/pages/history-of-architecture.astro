@@ -1,0 +1,111 @@
+---
+import Base from '../layouts/Base.astro';
+import NextSubject from '../components/NextSubject.astro';
+import { historyOfArchitecture as category } from '../data/categories';
+---
+
+<Base title={category.name} description={`${category.name}: ${category.intro}`} sheet={category.sheet} sheetTitle={category.name}>
+  <section class="ho wrap">
+    <div class="ho-meta mono">
+      <span>Subject {category.number}</span>
+      <span class="muted">Sheet {category.sheet}</span>
+      <span class="status">Status: In progress</span>
+    </div>
+    <h1 class="h1 ho-title" data-reveal>
+      {category.name.split(' ').map((word) => <span class="line"><span>{word}</span></span>)}
+    </h1>
+
+    <!-- Empty sheet being drafted: lines draw, pause, and redraw. -->
+    <figure class="ho-sheet" aria-hidden="true">
+      <svg viewBox="0 0 160 90" preserveAspectRatio="xMidYMid meet">
+        <rect x="2" y="2" width="156" height="86" class="frame" />
+        <path class="d d1" d="M20 70 H140" />
+        <path class="d d2" d="M30 70 V40 L80 18 L130 40 V70" />
+        <path class="d d3" d="M30 40 H130" />
+        <path class="d d4" d="M45 70 V48 M60 70 V48 M100 70 V48 M115 70 V48" />
+        <path class="d d5" d="M72 70 V52 Q80 44 88 52 V70" />
+        <path class="tb" d="M118 76 H158 M118 76 V88 M138 76 V88" />
+      </svg>
+      <figcaption class="mono muted">Elevation — drafting in progress</figcaption>
+    </figure>
+
+    <p class="lead ho-text">{category.intro}</p>
+  </section>
+  <NextSubject current={category.slug} />
+</Base>
+
+<style>
+  .ho {
+    padding-top: calc(var(--nav-h) + clamp(40px, 8vw, 120px));
+  }
+  .ho-meta {
+    display: flex;
+    gap: clamp(16px, 4vw, 60px);
+    flex-wrap: wrap;
+    margin-bottom: clamp(20px, 3vw, 40px);
+  }
+  .status {
+    color: var(--auburn-hi);
+  }
+  .ho-title .line:nth-child(2) {
+    padding-left: 12vw;
+  }
+  .ho-title .line:nth-child(3) {
+    padding-left: 4vw;
+  }
+  .ho-sheet {
+    margin-top: clamp(50px, 8vw, 110px);
+    border: 1px solid var(--line);
+    padding: clamp(16px, 3vw, 40px);
+  }
+  .ho-sheet svg {
+    width: 100%;
+    height: auto;
+    max-height: 60vh;
+  }
+  .ho-sheet figcaption {
+    margin-top: 14px;
+  }
+  .frame,
+  .tb {
+    fill: none;
+    stroke: var(--line-strong);
+    stroke-width: 0.3;
+  }
+  .d {
+    fill: none;
+    stroke: var(--paper);
+    stroke-width: 0.35;
+    stroke-linecap: square;
+    stroke-dasharray: 260;
+    stroke-dashoffset: 260;
+    animation: draft 9s var(--ease-draft) infinite;
+  }
+  .d2 { animation-delay: 0.6s; }
+  .d3 { animation-delay: 1.2s; }
+  .d4 { animation-delay: 1.8s; }
+  .d5 { animation-delay: 2.4s; stroke: var(--auburn-hi); }
+  @keyframes draft {
+    0% { stroke-dashoffset: 260; }
+    35%, 75% { stroke-dashoffset: 0; opacity: 1; }
+    95%, 100% { stroke-dashoffset: 0; opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .d { animation: none; stroke-dashoffset: 0; }
+  }
+  .ho-text {
+    margin-top: clamp(40px, 6vw, 80px);
+    max-width: 22ch;
+    color: var(--stone);
+  }
+  @media (max-width: 860px) {
+    .ho-title .line { padding-left: 0 !important; }
+  }
+</style>
+
+<script>
+  import { gsap, reducedMotion } from '../scripts/motion';
+  if (!reducedMotion) {
+    gsap.to('.ho-title .line > span', { y: 0, duration: 1.3, stagger: 0.1, ease: 'expo.out', delay: 0.35 });
+  }
+</script>

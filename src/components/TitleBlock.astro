@@ -1,0 +1,149 @@
+---
+import { categories } from '../data/categories';
+import { site } from '../data/site';
+
+interface Props {
+  sheet: string;
+  sheetTitle: string;
+}
+const { sheet, sheetTitle } = Astro.props;
+---
+
+<footer class="tb wrap">
+  <div class="tb-top">
+    <p class="tb-big" aria-hidden="true">
+      <span>{site.first}</span>
+      <span>{site.last}</span>
+    </p>
+    <div class="tb-side">
+      <p class="mono muted">Index</p>
+      <ul>
+        <li><a href="/" class="u-link">Home</a></li>
+        {
+          categories.map((c) => (
+            <li>
+              <a href={c.href} class:list={['u-link', { muted: c.status === 'in-progress' }]}>
+                {c.name}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <button class="mono u-link tb-top-btn" data-top>Back to top ↑</button>
+    </div>
+  </div>
+
+  <!-- Drawing-sheet title block -->
+  <dl class="tb-grid mono">
+    <div class="c-project"><dt>Project</dt><dd>Architecture Portfolio</dd></div>
+    <div class="c-name"><dt>Drawn by</dt><dd>{site.name}</dd></div>
+    <div><dt>Program</dt><dd>{site.program}</dd></div>
+    <div><dt>Department</dt><dd>{site.department}</dd></div>
+    <div><dt>Section</dt><dd>{site.section}</dd></div>
+    <div class="c-school"><dt>School</dt><dd>{site.school}</dd></div>
+    <div class="c-title"><dt>Sheet title</dt><dd>{sheetTitle}</dd></div>
+    <div><dt>Scale</dt><dd>NTS</dd></div>
+    <div><dt>Date</dt><dd>{site.year}</dd></div>
+    <div class="c-sheet"><dt>Sheet no.</dt><dd>{sheet}</dd></div>
+  </dl>
+  <p class="mono muted tb-copy">© {site.year} {site.name}. All plates are original academic work.</p>
+</footer>
+
+<style>
+  .tb {
+    position: relative;
+    z-index: 1;
+    padding-top: clamp(80px, 14vw, 200px);
+    padding-bottom: var(--margin);
+    border-top: 1px solid var(--line);
+    background: var(--ink);
+  }
+  .tb-top {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--gutter);
+    align-items: end;
+    margin-bottom: clamp(40px, 6vw, 80px);
+  }
+  .tb-big {
+    font-size: clamp(3rem, 12vw, 13rem);
+    font-weight: 240;
+    line-height: 0.84;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+  }
+  .tb-big span {
+    display: block;
+  }
+  .tb-big span:last-child {
+    padding-left: 0.6em;
+    color: var(--stone);
+  }
+  .tb-side ul {
+    list-style: none;
+    padding: 0;
+    margin: 14px 0 28px;
+    display: grid;
+    gap: 6px;
+  }
+  .tb-top-btn {
+    color: var(--stone);
+  }
+
+  .tb-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    border: 1px solid var(--line-strong);
+  }
+  .tb-grid {
+    overflow: hidden;
+  }
+  .tb-grid > div {
+    margin: 0 -1px -1px 0;
+    padding: 10px 12px 12px;
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    min-width: 0;
+  }
+  .tb-grid dt {
+    color: var(--stone);
+    font-size: 10.5px;
+    margin-bottom: 6px;
+  }
+  .tb-grid dd {
+    color: var(--paper);
+    overflow-wrap: anywhere;
+  }
+  .c-project,
+  .c-name,
+  .c-school,
+  .c-title {
+    grid-column: span 2;
+  }
+  .c-sheet dd {
+    font-size: 1.4rem;
+    letter-spacing: 0.02em;
+  }
+  .tb-copy {
+    margin-top: 18px;
+  }
+  @media (max-width: 860px) {
+    .tb-top {
+      grid-template-columns: 1fr;
+    }
+    .tb-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .c-project,
+    .c-name,
+    .c-school,
+    .c-title {
+      grid-column: span 2;
+    }
+  }
+</style>
+
+<script>
+  import { scrollToY } from '../scripts/motion';
+  document.querySelector('[data-top]')?.addEventListener('click', () => scrollToY(0, 1.6));
+</script>

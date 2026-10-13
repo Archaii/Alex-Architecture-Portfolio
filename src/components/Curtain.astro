@@ -1,0 +1,99 @@
+---
+// Page-change curtain. On internal link click the sheet wipes up (auburn edge leading),
+// the next page loads under it, then the curtain lifts away.
+---
+
+<div class="curtain" data-curtain aria-hidden="true">
+  <span class="curtain-edge"></span>
+  <span class="curtain-label mono" data-curtain-label></span>
+</div>
+
+<style>
+  .curtain {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    pointer-events: none;
+    background: var(--ink);
+    transform: scaleY(0);
+    transform-origin: bottom;
+    display: grid;
+    place-items: center;
+  }
+  .curtain-edge {
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 6px;
+    background: var(--auburn);
+  }
+  .curtain-label {
+    color: var(--stone);
+  }
+  :global(html.curtain-cover) .curtain {
+    transform: scaleY(1);
+  }
+</style>
+
+<script>
+  import { gsap, reducedMotion } from '../scripts/motion';
+
+  const curtain = document.querySelector<HTMLElement>('[data-curtain]')!;
+  const label = curtain.querySelector<HTMLElement>('[data-curtain-label]')!;
+  const html = document.documentElement;
+
+  const lift = () => {
+    if (!html.classList.contains('curtain-cover')) return;
+    gsap.fromTo(
+      curtain,
+      { scaleY: 1, transformOrigin: 'top' },
+      {
+        scaleY: 0,
+        duration: 0.9,
+        ease: 'expo.inOut',
+        delay: 0.05,
+        onComplete: () => {
+          html.classList.remove('curtain-cover');
+          gsap.set(curtain, { clearProps: 'all' });
+        },
+      },
+    );
+  };
+  lift();
+
+  // Pages restored from the back/forward cache come back with the curtain down.
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) {
+      html.classList.remove('curtain-cover');
+      gsap.set(curtain, { clearProps: 'all' });
+    }
+  });
+
+  if (!reducedMotion) {
+    document.addEventListener('click', (e) => {
+      const a = (e.target as Element | null)?.closest?.('a');
+      if (!a || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      if (a.target && a.target !== '_self') return;
+      if (a.hasAttribute('download')) return;
+      const url = new URL(a.href, location.href);
+      if (url.origin !== location.origin) return;
+      if (url.pathname === location.pathname) return; // hash links and same page
+      e.preventDefault();
+      label.textContent = a.dataset.sheet ?? a.textContent?.trim().slice(0, 40) ?? '';
+      gsap.fromTo(
+        curtain,
+        { scaleY: 0, transformOrigin: 'bottom' },
+        {
+          scaleY: 1,
+          duration: 0.7,
+          ease: 'expo.inOut',
+          onComplete: () => {
+            try {
+              sessionStorage.setItem('curtain', '1');
+            } catch {}
+            location.href = url.href;
+          },
+        },
+      );
+    });
+  }
+</script>

@@ -1,0 +1,79 @@
+---
+import { allCodes } from '../data/categories';
+const items = allCodes;
+---
+
+<div class="mq" data-marquee aria-hidden="true">
+  <div class="mq-track" data-marquee-track>
+    {
+      [0, 1].map(() => (
+        <div class="mq-set">
+          {items.map((code) => (
+            <span class="mq-item">
+              {code}
+              <span class="mq-sep">+</span>
+            </span>
+          ))}
+        </div>
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  .mq {
+    overflow: hidden;
+    border-block: 1px solid var(--line);
+    padding-block: clamp(14px, 2vw, 26px);
+  }
+  .mq-track {
+    display: flex;
+    width: max-content;
+  }
+  .mq-set {
+    display: flex;
+    flex-shrink: 0;
+  }
+  .mq-item {
+    display: inline-flex;
+    align-items: center;
+    font-size: clamp(2.4rem, 7vw, 7.5rem);
+    font-weight: 220;
+    font-stretch: 125%;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    white-space: nowrap;
+    color: transparent;
+    -webkit-text-stroke: 1px var(--stone);
+  }
+  .mq-item:nth-child(3n + 1) {
+    color: var(--paper);
+    -webkit-text-stroke: 0;
+  }
+  .mq-sep {
+    font-family: var(--font-mono);
+    font-size: 0.35em;
+    margin-inline: 0.7em;
+    color: var(--auburn-hi);
+    -webkit-text-stroke: 0;
+  }
+</style>
+
+<script>
+  import { gsap, lenis, reducedMotion } from '../scripts/motion';
+
+  const track = document.querySelector<HTMLElement>('[data-marquee-track]');
+  if (track && !reducedMotion) {
+    // One set is exactly half the track, so -50% loops seamlessly.
+    const loop = gsap.to(track, { xPercent: -50, duration: 60, ease: 'none', repeat: -1 });
+    // Start far into the repeat so reversing (scrolling up) never hits time zero.
+    loop.totalTime(60 * 500);
+    let dir = 1;
+    lenis?.on('scroll', ({ velocity }: { velocity: number }) => {
+      if (Math.abs(velocity) > 0.5) dir = velocity > 0 ? 1 : -1;
+      const boost = 1 + Math.min(Math.abs(velocity) * 0.35, 8);
+      gsap.to(loop, { timeScale: dir * boost, duration: 0.3, overwrite: true });
+      gsap.to(loop, { timeScale: dir, duration: 1.2, delay: 0.3, ease: 'power2.out' });
+    });
+  }
+</script>

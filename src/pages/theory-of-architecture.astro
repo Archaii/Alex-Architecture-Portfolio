@@ -1,0 +1,48 @@
+---
+import Base from '../layouts/Base.astro';
+import GalleryHeader from '../components/GalleryHeader.astro';
+import SeriesDeck from '../components/SeriesDeck.astro';
+import VideoFeature from '../components/VideoFeature.astro';
+import VideoModal from '../components/VideoModal.astro';
+import NextSubject from '../components/NextSubject.astro';
+import { theoryOfArchitecture as category, pad } from '../data/categories';
+
+const total = pad(category.works.length);
+let videoCount = 0;
+---
+
+<Base title={category.name} description={category.intro} sheet={category.sheet} sheetTitle={category.name}>
+  <GalleryHeader category={category} countLabel="Works" />
+
+  <nav class="toc wrap mono" aria-label="Works on this sheet">
+    {
+      category.works.map((w, i) => (
+        <a href={`#${w.slug}`} class="u-link">
+          <span class="muted">{pad(i + 1)}</span> {w.code} — {w.title}
+        </a>
+      ))
+    }
+  </nav>
+
+  {
+    category.works.map((w, i) =>
+      w.kind === 'series' ? (
+        <SeriesDeck series={w} number={pad(i + 1)} total={total} />
+      ) : w.kind === 'video' ? (
+        <VideoFeature video={w} number={pad(i + 1)} total={total} flip={videoCount++ % 2 === 1} />
+      ) : null,
+    )
+  }
+
+  <VideoModal />
+  <NextSubject current={category.slug} />
+</Base>
+
+<style>
+  .toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 36px;
+    padding-bottom: 20px;
+  }
+</style>

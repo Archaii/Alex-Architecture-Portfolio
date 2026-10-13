@@ -1,0 +1,58 @@
+---
+import { categories } from '../data/categories';
+
+interface Props {
+  current: string;
+}
+const { current } = Astro.props;
+const i = categories.findIndex((c) => c.slug === current);
+const next = categories[(i + 1) % categories.length]!;
+---
+
+<a href={next.href} class="ns wrap" data-cursor="Next" data-sheet={`Sheet ${next.sheet} — ${next.name}`}>
+  <span class="mono muted">Next sheet · {next.sheet}{next.status === 'in-progress' && ' · In progress'}</span>
+  <span class="ns-name">{next.name}</span>
+  <span class="ns-arrow" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0.8"><path d="M4 12h16M14 6l6 6-6 6"></path></svg>
+  </span>
+</a>
+
+<style>
+  .ns {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    gap: 14px var(--gutter);
+    padding-block: clamp(80px, 12vw, 180px) clamp(40px, 6vw, 80px);
+    margin-top: clamp(60px, 10vw, 140px);
+    border-top: 1px solid var(--line);
+  }
+  .ns > .mono {
+    grid-column: 1 / -1;
+  }
+  .ns-name {
+    font-size: clamp(2.2rem, 6.4vw, 8rem);
+    min-width: 0;
+    font-weight: 240;
+    line-height: 0.9;
+    text-transform: uppercase;
+    letter-spacing: -0.035em;
+    font-stretch: 80%;
+    transition: font-stretch 0.9s var(--ease-draft);
+  }
+  .ns:hover .ns-name,
+  .ns:focus-visible .ns-name {
+    font-stretch: 112%;
+  }
+  .ns-arrow {
+    width: clamp(48px, 7vw, 110px);
+    transition:
+      transform 0.7s var(--ease-draft),
+      color 0.3s;
+  }
+  .ns:hover .ns-arrow {
+    transform: translateX(10px);
+    color: var(--auburn-hi);
+  }
+</style>

@@ -1,0 +1,322 @@
+---
+import { Image, getImage } from 'astro:assets';
+import type { Category } from '../data/categories';
+import { plates, pad } from '../data/categories';
+import PlateLightbox from './PlateLightbox.astro';
+
+interface Props {
+  category: Category;
+}
+const { category } = Astro.props;
+const list = plates(category);
+const total = pad(list.length);
+
+// Large WebP used by the detail panel. Never upscale small scans.
+const fulls = await Promise.all(
+  list.map((p) => getImage({ src: p.image, width: Math.min(2400, p.image.width), format: 'webp', quality: 82 })),
+);
+const data = list.map((p, i) => ({
+  slug: p.slug,
+  code: p.code,
+  title: p.title,
+  quote: p.quote,
+  description: p.description,
+  full: fulls[i]!.src,
+  width: p.image.width,
+  height: p.image.height,
+  index: pad(i + 1),
+  total,
+}));
+---
+
+<section class="hg" data-hg aria-label={`${category.name} plates`}>
+  <div class="hg-viewport" data-hg-viewport>
+    <ol class="hg-track" data-hg-track>
+      {
+        list.map((p, i) => (
+          <li class="hg-item" data-hg-item>
+            <button
+              class="hg-card"
+              data-open={i}
+              data-cursor="View"
+              aria-label={`Open ${p.code} — ${p.title}`}
+              aria-haspopup="dialog"
+            >
+              <span class="hg-frame">
+                <Image
+                  src={p.image}
+                  alt={`${p.code} — ${p.title}, ${category.name} plate`}
+                  widths={[480, 800, 1200]}
+                  sizes="(min-width: 900px) 46vw, 92vw"
+                  class="mono-img hg-img"
+                  loading={i < 2 ? 'eager' : 'lazy'}
+                />
+              </span>
+              <span class="hg-cap">
+                <span class="mono muted">
+                  {pad(i + 1)} / {total}
+                </span>
+                <span class="mono hg-code">{p.code}</span>
+                <span class="hg-title">{p.title}</span>
+              </span>
+            </button>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+
+  <div class="hg-bar wrap">
+    <div class="hg-progress" aria-hidden="true"><span data-hg-progress></span></div>
+    <div class="hg-ctrl">
+      <button class="round-btn" data-hg-prev aria-label="Previous plate">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M20 12H4M10 6l-6 6 6 6"></path></svg>
+      </button>
+      <button class="round-btn" data-hg-next aria-label="Next plate">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 12h16M14 6l6 6-6 6"></path></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="hg-foot wrap" aria-hidden="true">
+    <span class="hg-big"><span data-hg-active>01</span><span class="hg-of">/{total}</span></span>
+    <span class="hg-big hg-big-code" data-hg-code>{list[0]?.code}</span>
+  </div>
+</section>
+
+<PlateLightbox data={data} category={category.name} />
+
+<style>
+  .hg {
+    position: relative;
+  }
+  .hg-track {
+    list-style: none;
+    padding: 0 var(--margin);
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
+    gap: clamp(40px, 5vw, 70px) var(--gutter);
+  }
+  .hg-card {
+    display: block;
+    width: 100%;
+    text-align: left;
+  }
+  .hg-frame {
+    display: block;
+    overflow: hidden;
+    background: var(--ink-2);
+  }
+  .hg-frame :global(img) {
+    width: 100%;
+  }
+  .hg-cap {
+    display: grid;
+    grid-template-columns: auto auto 1fr;
+    align-items: baseline;
+    gap: 6px 16px;
+    padding-top: 14px;
+  }
+  .hg-title {
+    text-transform: uppercase;
+    font-size: 0.95rem;
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+  }
+  .hg-code {
+    color: var(--auburn-hi);
+  }
+  .hg-bar,
+  .hg-foot {
+    display: none;
+  }
+
+  /* Pinned horizontal mode (desktop with motion). */
+  @media (min-width: 900px) {
+    :global(html.motion) .hg {
+      height: 100svh;
+      display: grid;
+      grid-template-rows: 1fr auto auto;
+      padding-top: calc(var(--nav-h) + 8px);
+      overflow: hidden;
+    }
+    :global(html.motion) .hg-viewport {
+      overflow: hidden;
+      min-height: 0;
+    }
+    :global(html.motion) .hg-track {
+      display: flex;
+      align-items: flex-start;
+      gap: clamp(28px, 2.4vw, 44px);
+      width: max-content;
+      height: 100%;
+      will-change: transform;
+    }
+    :global(html.motion) .hg-item {
+      height: 100%;
+    }
+    :global(html.motion) .hg-card {
+      height: 100%;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      width: auto;
+    }
+    :global(html.motion) .hg-frame {
+      height: 100%;
+      min-height: 0;
+    }
+    :global(html.motion) .hg-frame :global(img) {
+      height: 100%;
+      width: auto;
+      max-width: none;
+      transform: scale(1.06);
+    }
+    :global(html.motion) .hg-bar {
+      display: flex;
+      align-items: center;
+      gap: var(--gutter);
+      padding-top: 18px;
+    }
+    :global(html.motion) .hg-progress {
+      flex: 1;
+      height: 1px;
+      background: var(--line);
+      position: relative;
+    }
+    :global(html.motion) .hg-progress span {
+      position: absolute;
+      inset: 0;
+      background: var(--auburn-hi);
+      transform-origin: left;
+      transform: scaleX(0);
+    }
+    :global(html.motion) .hg-ctrl {
+      display: flex;
+      gap: 12px;
+    }
+    :global(html.motion) .hg-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-top: 14px;
+      border-top: 1px solid var(--line);
+      padding-bottom: 6px;
+    }
+  }
+  .hg-big {
+    font-size: clamp(4rem, 11vh, 9rem);
+    font-weight: 240;
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+  }
+  .hg-of {
+    color: var(--stone-2);
+  }
+  .hg-big-code {
+    font-stretch: 118%;
+  }
+</style>
+
+<script>
+  import { gsap, ScrollTrigger, reducedMotion, scrollToY } from '../scripts/motion';
+
+  const root = document.querySelector<HTMLElement>('[data-hg]');
+  if (root && !reducedMotion) {
+    const viewport = root.querySelector<HTMLElement>('[data-hg-viewport]')!;
+    const track = root.querySelector<HTMLElement>('[data-hg-track]')!;
+    const items = gsap.utils.toArray<HTMLElement>('[data-hg-item]', root);
+    const bar = root.querySelector<HTMLElement>('[data-hg-progress]')!;
+    const activeEl = root.querySelector<HTMLElement>('[data-hg-active]')!;
+    const codeEl = root.querySelector<HTMLElement>('[data-hg-code]')!;
+    const prev = root.querySelector<HTMLButtonElement>('[data-hg-prev]')!;
+    const next = root.querySelector<HTMLButtonElement>('[data-hg-next]')!;
+    const codes = items.map((li) => li.querySelector('.hg-code')?.textContent ?? '');
+
+    const mm = gsap.matchMedia();
+    mm.add('(min-width: 900px)', () => {
+      const maxX = () => Math.max(0, track.scrollWidth - viewport.clientWidth);
+      let active = -1;
+
+      const setActive = (i: number) => {
+        if (i === active) return;
+        active = i;
+        activeEl.textContent = String(i + 1).padStart(2, '0');
+        gsap.fromTo(codeEl, { yPercent: 40, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.5, ease: 'expo.out' });
+        codeEl.textContent = codes[i] ?? '';
+        prev.disabled = i === 0;
+        next.disabled = i === items.length - 1;
+      };
+
+      // Card whose left edge is closest to the left margin is "active".
+      const nearest = (x: number) => {
+        let best = 0;
+        let d = Infinity;
+        items.forEach((li, i) => {
+          const dist = Math.abs(li.offsetLeft - x);
+          if (dist < d) {
+            d = dist;
+            best = i;
+          }
+        });
+        return best;
+      };
+
+      const tween = gsap.to(track, {
+        x: () => -maxX(),
+        ease: 'none',
+        scrollTrigger: {
+          trigger: root,
+          pin: true,
+          start: 'top top',
+          end: () => `+=${maxX()}`,
+          scrub: 0.8,
+          invalidateOnRefresh: true,
+          onUpdate: (self) => {
+            gsap.set(bar, { scaleX: self.progress });
+            setActive(self.progress > 0.995 ? items.length - 1 : nearest(self.progress * maxX()));
+          },
+        },
+      });
+      setActive(0);
+
+      // Slow counter-parallax of each plate inside its frame.
+      items.forEach((li) => {
+        const img = li.querySelector('img');
+        if (!img) return;
+        gsap.fromTo(
+          img,
+          { xPercent: -2.5 },
+          {
+            xPercent: 2.5,
+            ease: 'none',
+            scrollTrigger: { trigger: li, containerAnimation: tween, start: 'left right', end: 'right left', scrub: true },
+          },
+        );
+      });
+
+      const go = (i: number) => {
+        const st = tween.scrollTrigger!;
+        const target = Math.min(items[i]!.offsetLeft - items[0]!.offsetLeft, maxX());
+        scrollToY(st.start + (target / (maxX() || 1)) * (st.end - st.start));
+      };
+      prev.addEventListener('click', () => go(Math.max(0, active - 1)));
+      next.addEventListener('click', () => go(Math.min(items.length - 1, active + 1)));
+
+      // Keep keyboard users in view: tabbing to a card scrolls the pin to it.
+      items.forEach((li, i) => {
+        const btn = li.querySelector('button');
+        btn?.addEventListener('focus', () => {
+          if (btn.matches(':focus-visible') && !document.documentElement.classList.contains('dialog-open')) go(i);
+        });
+      });
+
+      // Images load lazily; widths change, so re-measure.
+      track.querySelectorAll('img').forEach((img) => {
+        if (!img.complete) img.addEventListener('load', () => ScrollTrigger.refresh(), { once: true });
+      });
+    });
+  }
+</script>

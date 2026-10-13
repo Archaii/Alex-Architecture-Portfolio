@@ -1,0 +1,16 @@
+---
+import Base from '../layouts/Base.astro';
+import Preloader from '../components/Preloader.astro';
+import Hero from '../components/Hero.astro';
+import Statement from '../components/Statement.astro';
+import Marquee from '../components/Marquee.astro';
+import SubjectIndex from '../components/SubjectIndex.astro';
+---
+
+<Base sheet="A-000" sheetTitle="Cover sheet">
+  <Preloader slot="preloader" />
+  <Hero />
+  <Statement />
+  <Marquee />
+  <SubjectIndex />
+</Base>

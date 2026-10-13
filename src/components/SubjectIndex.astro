@@ -1,0 +1,219 @@
+---
+import { Image } from 'astro:assets';
+import { categories, previewImages, pad } from '../data/categories';
+
+const rows = categories.map((c) => {
+  const plateCount = c.works.filter((w) => w.kind === 'plate').length;
+  const count =
+    c.status === 'in-progress'
+      ? 'In progress'
+      : plateCount === c.works.length
+        ? `${pad(plateCount)} Plates`
+        : `${pad(c.works.length)} Works`;
+  const posters = c.works.flatMap((w) => (w.kind === 'video' ? [w.poster] : []));
+  return { c, count, images: previewImages(c), posters };
+});
+---
+
+<section class="ix wrap" data-index>
+  <div class="dim mono" aria-hidden="true"><span class="dim-tick"></span><span>Index of sheets</span><span class="dim-tick"></span></div>
+  <h2 class="visually-hidden">Subjects</h2>
+  <ol class="ix-list">
+    {
+      rows.map(({ c, count }) => (
+        <li data-sr>
+          <a
+            href={c.href}
+            class:list={['ix-row', { soon: c.status === 'in-progress' }]}
+            data-trail={c.slug}
+            data-cursor={c.status === 'in-progress' ? 'Soon' : 'Open'}
+            data-sheet={`Sheet ${c.sheet} — ${c.name}`}
+          >
+            <span class="mono ix-num">{c.number}</span>
+            <span class="ix-name">{c.name}</span>
+            <span class="mono ix-count">{count}</span>
+            <span class="ix-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                <path d="M4 12h16M14 6l6 6-6 6" />
+              </svg>
+            </span>
+          </a>
+        </li>
+      ))
+    }
+  </ol>
+
+  <!-- Image pools for the cursor trail. Hidden until the pointer moves across a row. -->
+  <div class="trail" aria-hidden="true" data-trail-layer>
+    {
+      rows.map(({ c, images, posters }) => (
+        <div data-pool={c.slug}>
+          {images.map((img) => (
+            <Image src={img} alt="" widths={[360]} sizes="18vw" loading="lazy" />
+          ))}
+          {posters.map((src) => (
+            <img src={src} alt="" loading="lazy" width="360" height="640" />
+          ))}
+        </div>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .ix {
+    position: relative;
+    padding-block: clamp(60px, 10vw, 140px);
+  }
+  .ix-list {
+    list-style: none;
+    padding: 0;
+    margin-top: clamp(30px, 5vw, 60px);
+    border-top: 1px solid var(--line);
+    position: relative;
+    z-index: 2;
+  }
+  .ix-row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 4rem 1fr auto 3rem;
+    align-items: center;
+    gap: var(--gutter);
+    padding-block: clamp(18px, 2.6vw, 34px);
+    border-bottom: 1px solid var(--line);
+    overflow: hidden;
+  }
+  /* Auburn fill wipes in from the left on hover. */
+  .ix-row::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--auburn);
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.7s var(--ease-draft);
+    z-index: -1;
+    opacity: 0.18;
+  }
+  .ix-row:hover::before,
+  .ix-row:focus-visible::before {
+    transform: scaleX(1);
+    transform-origin: left;
+  }
+  .ix-name {
+    font-size: clamp(1.7rem, 4.6vw, 5rem);
+    font-weight: 260;
+    line-height: 1;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+    font-stretch: 82%;
+    transition:
+      font-stretch 0.7s var(--ease-draft),
+      letter-spacing 0.7s var(--ease-draft),
+      transform 0.7s var(--ease-draft);
+  }
+  .ix-row:hover .ix-name,
+  .ix-row:focus-visible .ix-name {
+    font-stretch: 118%;
+    letter-spacing: -0.03em;
+    transform: translateX(1.2vw);
+  }
+  .ix-count {
+    color: var(--stone);
+  }
+  .ix-arrow {
+    justify-self: end;
+    width: 34px;
+    transition: transform 0.6s var(--ease-draft);
+  }
+  .ix-row:hover .ix-arrow {
+    transform: translateX(6px);
+    color: var(--auburn-hi);
+  }
+  .soon .ix-name {
+    color: var(--stone-2);
+  }
+  .soon .ix-count {
+    color: var(--auburn-hi);
+  }
+
+  .trail {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .trail > div {
+    display: contents;
+  }
+  .trail :global(img) {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: clamp(140px, 15vw, 240px);
+    height: auto;
+    opacity: 0;
+    visibility: hidden;
+    filter: grayscale(1);
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.8);
+  }
+
+  @media (max-width: 720px) {
+    .ix-row {
+      grid-template-columns: 2.4rem 1fr;
+      row-gap: 6px;
+    }
+    .ix-count {
+      grid-column: 2;
+    }
+    .ix-arrow {
+      display: none;
+    }
+    .ix-name {
+      font-stretch: 90%;
+    }
+  }
+</style>
+
+<script>
+  import { gsap, finePointer, reducedMotion } from '../scripts/motion';
+
+  const root = document.querySelector<HTMLElement>('[data-index]');
+  if (root && finePointer && !reducedMotion) {
+    const pools = new Map<string, HTMLImageElement[]>();
+    root.querySelectorAll<HTMLElement>('[data-pool]').forEach((p) => {
+      const imgs = Array.from(p.querySelectorAll('img'));
+      imgs.forEach((i) => (i.loading = 'eager'));
+      pools.set(p.dataset.pool!, imgs);
+    });
+
+    let last = { x: 0, y: 0 };
+    let i = 0;
+    let z = 1;
+
+    root.querySelectorAll<HTMLElement>('[data-trail]').forEach((row) => {
+      const pool = pools.get(row.dataset.trail!) ?? [];
+      if (!pool.length) return;
+      row.addEventListener('pointerenter', (e) => (last = { x: e.clientX, y: e.clientY }));
+      row.addEventListener('pointermove', (e) => {
+        const dist = Math.hypot(e.clientX - last.x, e.clientY - last.y);
+        if (dist < 90) return;
+        last = { x: e.clientX, y: e.clientY };
+        const img = pool[i++ % pool.length]!;
+        const w = img.offsetWidth || 200;
+        const h = img.offsetHeight || 260;
+        gsap.killTweensOf(img);
+        gsap.set(img, {
+          x: e.clientX - w / 2,
+          y: e.clientY - h / 2,
+          zIndex: z++,
+          autoAlpha: 1,
+          scale: 0.6,
+          rotate: gsap.utils.random(-8, 8),
+        });
+        gsap.to(img, { scale: 1, duration: 0.6, ease: 'expo.out' });
+        gsap.to(img, { autoAlpha: 0, scale: 0.9, y: `+=40`, duration: 0.8, delay: 0.5, ease: 'power2.in' });
+      });
+    });
+  }
+</script>

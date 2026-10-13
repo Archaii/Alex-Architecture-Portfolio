@@ -1,0 +1,376 @@
+/* ==========================================================================
+   Tokens
+   ========================================================================== */
+:root {
+  --ink: #0b0a09;
+  --ink-2: #141210;
+  --paper: #f2eee8;
+  --stone: #8c847a;
+  --stone-2: #5b554e;
+  --line: rgba(242, 238, 232, 0.14);
+  --line-strong: rgba(242, 238, 232, 0.32);
+  --auburn: #8a4b32;
+  --auburn-hi: #b4673f;
+
+  --font-display: 'Archivo Variable', 'Archivo', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  --fs-display: clamp(3.4rem, 13.2vw, 15.5rem);
+  --fs-h1: clamp(2.2rem, 9vw, 10rem);
+  --fs-h2: clamp(1.9rem, 4.6vw, 4.8rem);
+  --fs-lead: clamp(1.45rem, 3.1vw, 3.1rem);
+  --fs-body: clamp(1rem, 0.95rem + 0.2vw, 1.125rem);
+  --fs-mono: 0.75rem;
+
+  --margin: clamp(16px, 3vw, 40px);
+  --gutter: clamp(16px, 2vw, 28px);
+  --nav-h: 64px;
+
+  --ease-draft: cubic-bezier(0.7, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==========================================================================
+   Reset
+   ========================================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+* {
+  margin: 0;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: var(--ink);
+  color-scheme: dark;
+}
+body {
+  min-height: 100svh;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-display);
+  font-size: var(--fs-body);
+  font-weight: 350;
+  line-height: 1.55;
+  font-stretch: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+}
+img,
+video,
+svg {
+  display: block;
+  max-width: 100%;
+}
+img {
+  height: auto;
+}
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+a {
+  color: inherit;
+  text-decoration: none;
+}
+::selection {
+  background: var(--auburn);
+  color: var(--paper);
+}
+:focus-visible {
+  outline: 1px solid var(--auburn-hi);
+  outline-offset: 4px;
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* ==========================================================================
+   Typography helpers
+   ========================================================================== */
+.mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 1.5;
+}
+.muted {
+  color: var(--stone);
+}
+.display {
+  font-size: var(--fs-display);
+  font-weight: 260;
+  font-stretch: 100%;
+  line-height: 0.84;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+}
+.h1 {
+  font-size: var(--fs-h1);
+  font-weight: 260;
+  line-height: 0.86;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+}
+@media (max-width: 520px) {
+  .h1 {
+    font-stretch: 82%;
+  }
+}
+.h2 {
+  font-size: var(--fs-h2);
+  font-weight: 280;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+.lead {
+  font-size: var(--fs-lead);
+  font-weight: 300;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+}
+.quote {
+  font-style: italic;
+  font-weight: 300;
+  font-stretch: 92%;
+}
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Line-mask reveal: each line is a clipped box, the inner span slides up. */
+.line {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.04em;
+  margin-bottom: -0.04em;
+}
+.line > span {
+  display: inline-block;
+  will-change: transform;
+}
+html.motion [data-reveal] .line > span {
+  transform: translateY(110%);
+}
+html.motion [data-fade] {
+  opacity: 0;
+}
+
+/* ==========================================================================
+   Layout
+   ========================================================================== */
+.wrap {
+  padding-inline: var(--margin);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+}
+main {
+  position: relative;
+  z-index: 1;
+}
+
+/* Faint drawing-sheet grid behind every page. */
+.sheet-grid {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  padding-inline: var(--margin);
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--gutter);
+  opacity: 0.45;
+}
+.sheet-grid span {
+  border-inline: 1px solid rgba(242, 238, 232, 0.035);
+}
+@media (max-width: 720px) {
+  .sheet-grid span:nth-child(n + 5) {
+    display: none;
+  }
+  .sheet-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Registration cross used at sheet corners. */
+.reg {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+.reg::before,
+.reg::after {
+  content: '';
+  position: absolute;
+  background: var(--line-strong);
+}
+.reg::before {
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+.reg::after {
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+/* Dimension line: |——— LABEL ———| */
+.dim {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--stone);
+}
+.dim::before,
+.dim::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line-strong);
+}
+.dim {
+  position: relative;
+}
+.dim > .dim-tick {
+  position: absolute;
+  top: 50%;
+  width: 1px;
+  height: 11px;
+  translate: 0 -50%;
+  background: var(--line-strong);
+}
+.dim > .dim-tick:first-child {
+  left: 0;
+}
+.dim > .dim-tick:last-child {
+  right: 0;
+}
+
+/* Underline that draws on hover, in auburn. */
+.u-link {
+  position: relative;
+  display: inline-block;
+}
+.u-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -3px;
+  height: 1px;
+  background: var(--auburn-hi);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.45s var(--ease-draft);
+}
+.u-link:hover::after,
+.u-link:focus-visible::after,
+.u-link[aria-current='page']::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Round arrow button from the gallery template. */
+.round-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  transition:
+    border-color 0.3s,
+    background-color 0.3s,
+    color 0.3s;
+}
+.round-btn:hover,
+.round-btn:focus-visible {
+  border-color: var(--auburn-hi);
+  background: var(--auburn);
+}
+.round-btn[disabled] {
+  opacity: 0.3;
+  pointer-events: none;
+}
+.round-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Plates rest in grayscale and reveal color on hover/focus. */
+.mono-img {
+  filter: grayscale(1) contrast(1.02);
+  transition:
+    filter 0.7s var(--ease-out),
+    transform 0.9s var(--ease-out);
+}
+:is(a, button, figure):is(:hover, :focus-visible) .mono-img,
+.mono-img.is-color {
+  filter: grayscale(0);
+}
+
+/* Native cursor is hidden only when the custom CAD cursor is running. */
+html.has-cursor,
+html.has-cursor * {
+  cursor: none !important;
+}
+html.has-cursor.dialog-open,
+html.has-cursor.dialog-open * {
+  cursor: auto !important;
+}
+html.has-cursor.dialog-open :is(a, button, [role='button'], input) {
+  cursor: pointer !important;
+}
+
+/* ==========================================================================
+   Reduced motion
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+html.motion [data-sr] {
+  opacity: 0;
+  transform: translateY(40px);
+}

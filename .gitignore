@@ -1,0 +1,18 @@
+# build output
+dist/
+.astro/
+.vercel/
+
+# dependencies
+node_modules/
+
+# raw source material (kept locally, optimised copies live in src/assets and public/video)
+projects/
+resources/
+template/
+
+# logs and env
+npm-debug.log*
+.env*
+.DS_Store
+Thumbs.db

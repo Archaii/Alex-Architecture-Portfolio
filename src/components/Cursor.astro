@@ -1,0 +1,157 @@
+---
+// CAD-style crosshair cursor with a live coordinate readout.
+// Only mounts for fine pointers; touch devices keep native behaviour.
+---
+
+<div class="cursor" data-cursor-root aria-hidden="true">
+  <span class="cx-h"></span>
+  <span class="cx-v"></span>
+  <span class="cx-ring"><span class="cx-label mono" data-cursor-label></span></span>
+  <span class="cx-read mono" data-cursor-read>X 0000 · Y 0000</span>
+</div>
+
+<style>
+  .cursor {
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+    pointer-events: none;
+    display: none;
+  }
+  :global(html.has-cursor) .cursor {
+    display: block;
+  }
+  :global(html.dialog-open) .cursor {
+    display: none;
+  }
+  .cx-h,
+  .cx-v {
+    position: absolute;
+    background: rgba(242, 238, 232, 0.09);
+  }
+  .cx-h {
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 1px;
+  }
+  .cx-v {
+    left: 0;
+    top: 0;
+    width: 1px;
+    height: 100vh;
+  }
+  .cx-ring {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    border: 1px solid var(--paper);
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    transition:
+      width 0.35s var(--ease-out),
+      height 0.35s var(--ease-out),
+      margin 0.35s var(--ease-out),
+      background-color 0.35s,
+      border-color 0.35s;
+  }
+  .cx-label {
+    font-size: 11px;
+    color: var(--paper);
+    opacity: 0;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+  }
+  .cursor.is-active .cx-ring {
+    width: 76px;
+    height: 76px;
+    margin: -38px 0 0 -38px;
+    background: var(--auburn);
+    border-color: var(--auburn);
+  }
+  .cursor.is-active .cx-label {
+    opacity: 1;
+  }
+  .cursor.is-active .cx-h,
+  .cursor.is-active .cx-v {
+    background: rgba(180, 103, 63, 0.22);
+  }
+  .cx-read {
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-size: 11px;
+    color: var(--stone);
+    white-space: nowrap;
+    translate: 16px 14px;
+  }
+  .cursor.is-active .cx-read {
+    opacity: 0;
+  }
+  .cursor.is-down .cx-ring {
+    scale: 0.85;
+  }
+</style>
+
+<script>
+  import { gsap, finePointer, reducedMotion } from '../scripts/motion';
+
+  const root = document.querySelector<HTMLElement>('[data-cursor-root]');
+  if (root && finePointer) {
+    const html = document.documentElement;
+    html.classList.add('has-cursor');
+
+    const h = root.querySelector<HTMLElement>('.cx-h')!;
+    const v = root.querySelector<HTMLElement>('.cx-v')!;
+    const ring = root.querySelector<HTMLElement>('.cx-ring')!;
+    const read = root.querySelector<HTMLElement>('[data-cursor-read]')!;
+    const label = root.querySelector<HTMLElement>('[data-cursor-label]')!;
+
+    const lag = reducedMotion ? 0 : 0.18;
+    const ringX = gsap.quickTo(ring, 'x', { duration: lag, ease: 'power3.out' });
+    const ringY = gsap.quickTo(ring, 'y', { duration: lag, ease: 'power3.out' });
+    const pad = (n: number) => String(Math.max(0, Math.round(n))).padStart(4, '0');
+
+    gsap.set([ring, read], { x: -100, y: -100 });
+
+    window.addEventListener(
+      'pointermove',
+      (e) => {
+        if (e.pointerType !== 'mouse') return;
+        h.style.transform = `translateY(${e.clientY}px)`;
+        v.style.transform = `translateX(${e.clientX}px)`;
+        read.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+        read.textContent = `X ${pad(e.clientX)} · Y ${pad(e.clientY)}`;
+        ringX(e.clientX);
+        ringY(e.clientY);
+      },
+      { passive: true },
+    );
+
+    // Elements opt in to a labelled ring with data-cursor="View". Links and buttons get a small ring.
+    const target = (el: EventTarget | null) =>
+      el instanceof Element ? el.closest<HTMLElement>('[data-cursor], a, button, [role="button"]') : null;
+
+    document.addEventListener('pointerover', (e) => {
+      const t = target(e.target);
+      if (!t) return;
+      const text = t.dataset.cursor;
+      root.classList.toggle('is-active', !!text);
+      label.textContent = text ?? '';
+      if (!text) gsap.to(ring, { scale: 2.2, duration: 0.3, ease: 'power3.out' });
+    });
+    document.addEventListener('pointerout', (e) => {
+      const t = target(e.target);
+      if (!t || (e.relatedTarget instanceof Node && t.contains(e.relatedTarget))) return;
+      root.classList.remove('is-active');
+      gsap.to(ring, { scale: 1, duration: 0.3, ease: 'power3.out' });
+    });
+    window.addEventListener('pointerdown', () => root.classList.add('is-down'));
+    window.addEventListener('pointerup', () => root.classList.remove('is-down'));
+    document.addEventListener('mouseleave', () => gsap.set([ring, read], { x: -100, y: -100 }));
+  }
+</script>

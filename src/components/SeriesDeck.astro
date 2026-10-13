@@ -1,0 +1,362 @@
+---
+import { Image } from 'astro:assets';
+import type { Series } from '../data/categories';
+import { pad } from '../data/categories';
+
+interface Props {
+  series: Series;
+  number: string;
+  total: string;
+}
+const { series: s, number, total } = Astro.props;
+const count = pad(s.slides.length);
+const sheet = s.frame === 'sheet';
+---
+
+<section class="sd wrap" id={s.slug} data-deck>
+  <div class="dim mono" aria-hidden="true">
+    <span class="dim-tick"></span><span>{number} / {total} · Series · {count} slides</span><span class="dim-tick"></span>
+  </div>
+
+  <div class="sd-grid" data-sr>
+    <div class="sd-meta">
+      <span class="mono sd-code">{s.code}</span>
+      <h2 class="h2 sd-title">{s.title}</h2>
+      {s.subtitle && <p class="mono muted">{s.subtitle}</p>}
+      <p class="quote sd-quote">“{s.quote}”</p>
+      <p class="sd-desc">{s.description}</p>
+
+      <div class="sd-ctrl">
+        <span class="sd-count" aria-live="polite">
+          <span data-deck-index>01</span><span class="muted">/{count}</span>
+        </span>
+        <div class="sd-btns">
+          <button class="round-btn" data-deck-prev aria-label={`Previous slide, ${s.title}`} disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M20 12H4M10 6l-6 6 6 6"></path></svg>
+          </button>
+          <button class="round-btn" data-deck-next aria-label={`Next slide, ${s.title}`}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 12h16M14 6l6 6-6 6"></path></svg>
+          </button>
+          <button class="round-btn" data-deck-full aria-label={`View ${s.title} fullscreen`}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"></path></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class:list={['sd-viewer', { 'is-sheet': sheet }]}
+      data-deck-viewer
+      tabindex="0"
+      role="region"
+      aria-roledescription="carousel"
+      aria-label={`${s.title} — use arrow keys to change slide`}
+      data-cursor="Drag"
+    >
+      <div class="sd-track" data-deck-track>
+        {
+          s.slides.map((img, i) => (
+            <figure class="sd-slide" aria-roledescription="slide" aria-label={`${i + 1} of ${s.slides.length}`}>
+              <Image
+                src={img}
+                alt={`${s.title}, slide ${i + 1} of ${s.slides.length}`}
+                widths={sheet ? [img.width] : [640, 1024, 1600, 1920]}
+                sizes="(min-width: 900px) 64vw, 100vw"
+                loading={i === 0 ? 'eager' : 'lazy'}
+                draggable="false"
+              />
+            </figure>
+          ))
+        }
+      </div>
+      <div class="sd-progress" aria-hidden="true"><span data-deck-progress></span></div>
+    </div>
+  </div>
+
+  <div class="sd-film" data-sr role="group" aria-label={`${s.title} slides`}>
+    {
+      s.slides.map((img, i) => (
+        <button class="sd-thumb" data-deck-thumb={i} aria-label={`Go to slide ${i + 1}`} aria-current={i === 0 ? 'true' : undefined}>
+          <Image src={img} alt="" widths={[200]} sizes="120px" loading="lazy" class="mono-img" />
+          <span class="mono">{pad(i + 1)}</span>
+        </button>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .sd {
+    padding-block: clamp(70px, 10vw, 140px);
+  }
+  .sd-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 4fr) minmax(0, 8fr);
+    gap: var(--gutter) clamp(24px, 3vw, 56px);
+    margin-top: clamp(30px, 4vw, 56px);
+    align-items: stretch;
+  }
+  .sd-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .sd-code {
+    color: var(--auburn-hi);
+    font-size: 0.85rem;
+  }
+  .sd-quote {
+    font-size: 1.25rem;
+    line-height: 1.35;
+    margin-top: 8px;
+  }
+  .sd-desc {
+    color: var(--stone);
+    max-width: 44ch;
+  }
+  .sd-ctrl {
+    margin-top: auto;
+    padding-top: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .sd-count {
+    font-size: clamp(3rem, 6vw, 6rem);
+    font-weight: 240;
+    line-height: 0.9;
+    letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+  }
+  .sd-count .muted {
+    color: var(--stone-2);
+  }
+  .sd-btns {
+    display: flex;
+    gap: 10px;
+  }
+
+  .sd-viewer {
+    position: relative;
+    align-self: start;
+    width: 100%;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    background: var(--ink-2);
+    touch-action: pan-y;
+    user-select: none;
+    cursor: grab;
+  }
+  .sd-viewer:active {
+    cursor: grabbing;
+  }
+  .sd-track {
+    display: flex;
+    height: 100%;
+    will-change: transform;
+  }
+  .sd-slide {
+    flex: 0 0 100%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+  }
+  .sd-slide :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    pointer-events: none;
+  }
+  /* Small near-square slides sit on a paper sheet instead of being stretched. */
+  .is-sheet {
+    background: var(--paper);
+  }
+  .is-sheet .sd-slide :global(img) {
+    width: auto;
+    height: 92%;
+    max-width: 92%;
+  }
+  .sd-progress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    background: rgba(11, 10, 9, 0.25);
+  }
+  .sd-progress span {
+    position: absolute;
+    inset: 0;
+    background: var(--auburn);
+    transform-origin: left;
+    transform: scaleX(0);
+    transition: transform 0.8s var(--ease-draft);
+  }
+  .sd-viewer:fullscreen {
+    aspect-ratio: auto;
+    height: 100%;
+    background: var(--ink);
+  }
+  .sd-viewer.is-sheet:fullscreen {
+    background: var(--paper);
+  }
+
+  .sd-film {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+    scrollbar-width: thin;
+    justify-content: flex-end;
+  }
+  .sd-thumb {
+    flex: 0 0 auto;
+    width: clamp(72px, 8vw, 120px);
+    display: grid;
+    gap: 6px;
+    opacity: 0.45;
+    transition: opacity 0.3s;
+  }
+  .sd-thumb :global(img) {
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    object-fit: cover;
+    outline: 1px solid transparent;
+    outline-offset: 2px;
+    transition: outline-color 0.3s;
+  }
+  .sd-thumb[aria-current='true'],
+  .sd-thumb:hover {
+    opacity: 1;
+  }
+  .sd-thumb[aria-current='true'] :global(img) {
+    outline-color: var(--auburn-hi);
+    filter: grayscale(0);
+  }
+  .sd-thumb .mono {
+    font-size: 10.5px;
+  }
+
+  @media (max-width: 900px) {
+    .sd-grid {
+      grid-template-columns: 1fr;
+    }
+    .sd-viewer {
+      grid-row: 2;
+    }
+    .sd-meta {
+      display: contents;
+    }
+    .sd-ctrl {
+      grid-row: 3;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 6px;
+    }
+    .sd-count {
+      font-size: 2.6rem;
+    }
+    .sd-btns .round-btn {
+      width: 44px;
+      height: 44px;
+    }
+    .sd-film {
+      justify-content: flex-start;
+    }
+  }
+</style>
+
+<script>
+  import { gsap, reducedMotion } from '../scripts/motion';
+
+  document.querySelectorAll<HTMLElement>('[data-deck]').forEach((deck) => {
+    const viewer = deck.querySelector<HTMLElement>('[data-deck-viewer]')!;
+    const track = deck.querySelector<HTMLElement>('[data-deck-track]')!;
+    const slides = Array.from(track.children) as HTMLElement[];
+    const idxEl = deck.querySelector<HTMLElement>('[data-deck-index]')!;
+    const bar = deck.querySelector<HTMLElement>('[data-deck-progress]')!;
+    const prev = deck.querySelector<HTMLButtonElement>('[data-deck-prev]')!;
+    const next = deck.querySelector<HTMLButtonElement>('[data-deck-next]')!;
+    const full = deck.querySelector<HTMLButtonElement>('[data-deck-full]')!;
+    const film = deck.querySelector<HTMLElement>('.sd-film')!;
+    const thumbs = Array.from(deck.querySelectorAll<HTMLButtonElement>('[data-deck-thumb]'));
+    const n = slides.length;
+    let index = 0;
+
+    const width = () => viewer.clientWidth;
+    const place = (animate = true) =>
+      gsap.to(track, { x: -index * width(), duration: animate && !reducedMotion ? 0.9 : 0, ease: 'expo.out', overwrite: true });
+
+    const go = (i: number, animate = true) => {
+      index = Math.max(0, Math.min(n - 1, i));
+      place(animate);
+      idxEl.textContent = String(index + 1).padStart(2, '0');
+      bar.style.transform = `scaleX(${(index + 1) / n})`;
+      prev.disabled = index === 0;
+      next.disabled = index === n - 1;
+      thumbs.forEach((t, k) => t.setAttribute('aria-current', String(k === index)));
+      const t = thumbs[index];
+      if (t && film.scrollWidth > film.clientWidth) {
+        film.scrollTo({ left: t.offsetLeft - film.offsetLeft - film.clientWidth / 2 + t.offsetWidth / 2, behavior: animate ? 'smooth' : 'auto' });
+      }
+      // Warm the next slide so swipes never land on an empty frame.
+      slides[index + 1]?.querySelector('img')?.setAttribute('loading', 'eager');
+    };
+    go(0, false);
+
+    prev.addEventListener('click', () => go(index - 1));
+    next.addEventListener('click', () => go(index + 1));
+    thumbs.forEach((t, k) => t.addEventListener('click', () => go(k)));
+    viewer.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        go(index + 1);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        go(index - 1);
+      }
+    });
+
+    // Drag / swipe.
+    let startX = 0;
+    let startY = 0;
+    let dx = 0;
+    let dragging = false;
+    let horizontal: boolean | null = null;
+    viewer.addEventListener('pointerdown', (e) => {
+      if (e.button !== 0) return;
+      dragging = true;
+      horizontal = e.pointerType === 'mouse' ? true : null;
+      startX = e.clientX;
+      startY = e.clientY;
+      dx = 0;
+    });
+    window.addEventListener('pointermove', (e) => {
+      if (!dragging) return;
+      dx = e.clientX - startX;
+      if (horizontal === null && Math.hypot(dx, e.clientY - startY) > 8) {
+        horizontal = Math.abs(dx) > Math.abs(e.clientY - startY);
+      }
+      if (!horizontal) return;
+      const edge = (index === 0 && dx > 0) || (index === n - 1 && dx < 0) ? 0.3 : 1;
+      gsap.set(track, { x: -index * width() + dx * edge });
+    });
+    const end = () => {
+      if (!dragging) return;
+      dragging = false;
+      if (horizontal && Math.abs(dx) > Math.min(80, width() * 0.12)) go(index + (dx < 0 ? 1 : -1));
+      else place();
+    };
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+
+    full.addEventListener('click', () => {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else viewer.requestFullscreen?.().then(() => viewer.focus());
+    });
+    viewer.addEventListener('fullscreenchange', () => place(false));
+    window.addEventListener('resize', () => place(false));
+  });
+</script>
